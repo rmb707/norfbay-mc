@@ -54,7 +54,7 @@ services:
     container_name: norfbay-cobblemon
     environment:
       <<: *mc-env
-      MEMORY: "8G"
+      MEMORY: "${MEM_COBBLEMON:-8G}"
       MOTD: "§dNorfbay §fCobblemon §7— gotta catch 'em all"
       # Server-side mods (client-only render mods like Sodium/Iris are NOT here —
       # they live in the client .mrpack). Deps (architectury, kotlin) auto-resolve.
@@ -67,7 +67,9 @@ services:
         spark,
         chunky
     ports:
-      - "25565:25565"           # game (LAN/localhost until playit is wired)
+      # MC_BIND=127.0.0.1 on the Oracle box so the game is NOT public — playit
+      # forwards from localhost. (Defaults to 0.0.0.0 for LAN/laptop use.)
+      - "${MC_BIND:-0.0.0.0}:25565:25565"
       - "127.0.0.1:25575:25575" # rcon (admin only, localhost)
     volumes:
       - ./data/cobblemon:/data
@@ -77,7 +79,7 @@ services:
     container_name: norfbay-vanilla
     environment:
       <<: *mc-env
-      MEMORY: "6G"
+      MEMORY: "${MEM_VANILLA:-6G}"
       MOTD: "§aNorfbay §fVanilla+ §7— pure survival, tuned"
       MODRINTH_PROJECTS: >-
         fabric-api,
@@ -86,7 +88,7 @@ services:
         spark,
         chunky
     ports:
-      - "25566:25565"
+      - "${MC_BIND:-0.0.0.0}:25566:25565"
       - "127.0.0.1:25576:25575"
     volumes:
       - ./data/vanilla:/data

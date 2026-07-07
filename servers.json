@@ -1,0 +1,5 @@
+{
+  "_note": "The launcher fetches this to resolve server addresses at runtime, so changing where the servers live (laptop -> Oracle -> playit address) is a one-line edit here + git push, with NO new .exe. Update the two 'server' values after playit is set up on the Oracle box.",
+  "cobblemon": { "server": "100.103.103.67:25565" },
+  "vanilla": { "server": "100.103.103.67:25566" }
+}

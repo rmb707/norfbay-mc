@@ -7,8 +7,26 @@ const path = require('path');
 const fs = require('fs');
 const { Client } = require('minecraft-launcher-core');
 const { Auth } = require('msmc');
-const { MINECRAFT_VERSION, GAMES } = require('./config');
+const { MINECRAFT_VERSION, GAMES, REMOTE_CONFIG_URL } = require('./config');
 const { ensureJava, ensureFabric, installModpack } = require('./installer');
+
+// Resolve server addresses from the hosted config (so they can change without a
+// new .exe), falling back to the baked-in defaults if the fetch fails.
+let resolvedGames = null;
+async function resolveGames() {
+  const games = JSON.parse(JSON.stringify(GAMES));
+  try {
+    const r = await fetch(REMOTE_CONFIG_URL, { cache: 'no-store' });
+    if (r.ok) {
+      const remote = await r.json();
+      for (const id of Object.keys(games)) {
+        if (remote[id] && typeof remote[id].server === 'string') games[id].server = remote[id].server;
+      }
+    }
+  } catch { /* offline / unreachable -> use baked-in addresses */ }
+  resolvedGames = games;
+  return games;
+}
 
 const isPackaged = app.isPackaged;
 const ASSETS = isPackaged ? path.join(process.resourcesPath, 'assets') : path.join(__dirname, '..', 'assets');
@@ -73,11 +91,12 @@ ipcMain.handle('auth:logout', async () => {
   try { fs.unlinkSync(AUTH_FILE()); } catch {}
   return true;
 });
-ipcMain.handle('games', async () => GAMES);
+ipcMain.handle('games', async () => resolveGames());
 
 // ---- play ----
 ipcMain.handle('play', async (_e, { gameId, server, memoryMb }) => {
-  const game = GAMES[gameId];
+  const games = resolvedGames || (await resolveGames());
+  const game = games[gameId];
   if (!game) throw new Error(`Unknown game ${gameId}`);
   if (!xbox) { await tryRestoreLogin(); }
   if (!xbox) throw new Error('Not signed in');
