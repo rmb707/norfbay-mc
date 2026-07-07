@@ -9,6 +9,8 @@ data/
 # Built modpack artifacts
 dist/
 *.mrpack
+# ...but keep the packs embedded in the launcher (needed to build the .exe)
+!launcher/assets/*.mrpack
 
 # Node / build
 node_modules/

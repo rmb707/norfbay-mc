@@ -1,0 +1,48 @@
+{
+  "name": "norfbay-launcher",
+  "productName": "Norfbay",
+  "version": "0.1.0",
+  "description": "One-click launcher for the Norfbay Minecraft servers — installs Minecraft, Fabric, Java and the modpack, then plays.",
+  "author": "Norfbay",
+  "license": "MIT",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --x64",
+    "pack": "electron-builder --dir"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "extract-zip": "^2.0.1",
+    "minecraft-launcher-core": "^3.18.2",
+    "msmc": "^4.1.0"
+  },
+  "devDependencies": {
+    "electron": "^32.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.norfbay.launcher",
+    "productName": "Norfbay",
+    "files": [
+      "src/**/*",
+      "renderer/**/*"
+    ],
+    "extraResources": [
+      { "from": "assets", "to": "assets" }
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "artifactName": "Norfbay-Setup-${version}.${ext}",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "runAfterFinish": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Norfbay"
+    }
+  }
+}

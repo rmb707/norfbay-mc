@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;" />
+  <title>Norfbay</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="logo">◆</span> NORFBAY</div>
+    <div class="account" id="account">
+      <button id="signin" class="btn ghost">Sign in with Microsoft</button>
+      <div id="whoami" class="whoami hidden">
+        <span class="dot"></span><span id="username">—</span>
+        <button id="signout" class="btn tiny">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <h1 class="tagline">Pick your world. Hit play.</h1>
+    <p class="sub">One click installs Minecraft, mods, and Java — then drops you into the server.</p>
+
+    <section class="cards" id="cards"><!-- game cards injected here --></section>
+
+    <details class="advanced">
+      <summary>Advanced</summary>
+      <div class="adv-grid">
+        <label>Server address override
+          <input id="server" type="text" placeholder="(defaults to the selected game's server)" />
+        </label>
+        <label>Memory
+          <select id="memory">
+            <option value="3072">3 GB</option>
+            <option value="4096" selected>4 GB</option>
+            <option value="6144">6 GB</option>
+            <option value="8192">8 GB</option>
+          </select>
+        </label>
+      </div>
+    </details>
+
+    <div class="playbar">
+      <button id="play" class="btn primary" disabled>Select a game</button>
+    </div>
+
+    <div class="progress hidden" id="progress">
+      <div class="bar"><div class="fill" id="fill"></div></div>
+      <div class="phase" id="phase">Working…</div>
+    </div>
+
+    <pre class="log hidden" id="log"></pre>
+  </main>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
