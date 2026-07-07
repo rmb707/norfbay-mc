@@ -88,13 +88,20 @@ ipcMain.handle('play', async (_e, { gameId, server, memoryMb }) => {
 
   send('phase', { text: `Preparing ${game.name}…`, pct: 0 });
 
-  const javaPath = await ensureJava(app.getPath('userData'), (m) => log(m));
-  send('phase', { text: 'Installing modpack…', pct: 10 });
+  const javaPath = await ensureJava(
+    app.getPath('userData'),
+    (m) => log(m),
+    (stage, p) => {
+      if (stage === 'download') send('phase', { text: `Downloading Java 21… ${Math.round(p * 100)}%`, pct: Math.round(p * 8) });
+      else send('phase', { text: `Extracting Java 21… ${Math.round(p * 100)}% (first run is slow — Windows scans each file)`, pct: 8 + Math.round(p * 8) });
+    }
+  );
+  send('phase', { text: 'Installing modpack…', pct: 18 });
   await installModpack(
     root,
     path.join(ASSETS, game.mrpack),
     (m) => log(m),
-    (done, total) => send('phase', { text: `Downloading mods (${done}/${total})…`, pct: 10 + Math.round((done / Math.max(total, 1)) * 40) })
+    (done, total) => send('phase', { text: `Downloading mods (${done}/${total})…`, pct: 18 + Math.round((done / Math.max(total, 1)) * 37) })
   );
   const fabricVersion = await ensureFabric(root, MINECRAFT_VERSION, (m) => log(m));
 

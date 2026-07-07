@@ -60,7 +60,7 @@ function findJavaw(dir) {
   return null;
 }
 
-async function ensureJava(baseDir, log) {
+async function ensureJava(baseDir, log, onProgress) {
   const javaDir = path.join(baseDir, 'runtime', 'temurin21');
   const existing = findJavaw(javaDir);
   if (existing) { log(`Java 21 ready.`); return existing; }
@@ -68,9 +68,21 @@ async function ensureJava(baseDir, log) {
   log(`Downloading Java ${JAVA.major} runtime…`);
   await fsp.mkdir(javaDir, { recursive: true });
   const zip = path.join(baseDir, 'runtime', 'temurin21.zip');
-  await download(JAVA.url, zip, (p) => log(`Java ${JAVA.major}: ${p >= 0 ? Math.round(p * 100) + '%' : '…'}`, true));
-  log(`Extracting Java runtime…`);
-  await extract(zip, { dir: javaDir });
+  await download(JAVA.url, zip, (p) => onProgress && onProgress('download', p));
+
+  log(`Extracting Java runtime… (first run scans ~900 files, can take a few minutes)`);
+  let done = 0;
+  await extract(zip, {
+    dir: javaDir,
+    onEntry: (_entry, zipfile) => {
+      done++;
+      const total = zipfile.entryCount || 0;
+      if (total && (done % 20 === 0 || done === total)) {
+        if (onProgress) onProgress('extract', done / total);
+        log(`Extracting Java runtime… ${Math.round((done / total) * 100)}% (${done}/${total})`);
+      }
+    },
+  });
   await fsp.rm(zip, { force: true });
   const javaw = findJavaw(javaDir);
   if (!javaw) throw new Error('Java runtime extracted but javaw.exe not found');
