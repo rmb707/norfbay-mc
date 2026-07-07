@@ -33,23 +33,19 @@ docker compose stop cobblemon
 docker compose start cobblemon
 ```
 
-## Go public — playit.gg (game traffic)
-1. Make a free account at https://playit.gg.
-2. Bring the agent up once to claim it: `docker compose --profile public up -d playit`,
-   then open the claim URL it prints (`docker compose logs playit`).
-3. In the playit dashboard, create tunnels to your laptop's `25565` (Cobblemon) and `25566`
-   (Vanilla), and attach a **custom domain** so `minecraft.norfbay.com` (and optionally
-   `cobblemon.` / `vanilla.`) CNAME to the tunnel.
-4. Paste the agent secret into `.env` as `PLAYIT_SECRET`, then `docker compose --profile public up -d`.
+## Give friends access — Tailscale (private, chosen approach)
+No ports are exposed publicly. The servers publish `25565`/`25566` on the host, so they're
+reachable over the laptop's Tailscale interface automatically. Give each friend access by
+**sharing the node** (they don't need to be members of your tailnet):
+1. Friend installs Tailscale (https://tailscale.com/download) and signs in (free account).
+2. In the Tailscale admin console → Machines → `rmbsomenmax` → **Share** → create a share link →
+   send it to the friend → they **Accept**.
+3. They connect via the launcher (address `100.103.103.67:25565` / `:25566` is baked in), and you
+   whitelist their Minecraft name (see above).
+Laptop node: `rmbsomenmax` · `100.103.103.67` · `rmbsomenmax.tail635106.ts.net`.
 
-## Go public — website + auth (profile: web)
-1. **Cloudflare**: move `norfbay.com` DNS to Cloudflare (free). Zero Trust → Networks → Tunnels →
-   create a tunnel, route `play.norfbay.com` → `http://web:3000`, copy the token → `.env` `CF_TUNNEL_TOKEN`.
-2. **Google OAuth**: Google Cloud Console → APIs & Services → Credentials → OAuth client (Web).
-   Authorized redirect URI: `https://play.norfbay.com/api/auth/callback/google`. Put the client
-   id/secret in `.env` (`AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`); set `AUTH_SECRET` (`openssl rand -base64 32`);
-   list friend emails in `ALLOWED_EMAILS`.
-3. `docker compose --profile web up -d`.
+> Optional public alternative (not used): a `playit` service exists in `docker-compose.yml`
+> behind `--profile public` if you ever want a public `minecraft.norfbay.com` instead.
 
 ## No downtime on lid close
 Run once, as admin: `powershell -ExecutionPolicy Bypass -File scripts\setup-power.ps1`

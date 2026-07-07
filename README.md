@@ -6,9 +6,9 @@ Minecraft version install automatically. Two experiences, both Fabric **1.21.1**
 - 🟣 **Cobblemon** — Pokémon in Minecraft, curated "epic" pack
 - 🟢 **Vanilla+** — performance / QoL / worldgen, keeps the vanilla feel
 
-Hosted on one Windows 11 laptop in Docker. Public game access via **playit.gg**
-(`minecraft.norfbay.com`), a Google-gated site at **play.norfbay.com**, and a custom
-**Norfbay Launcher** that does the one-click install + launch.
+Hosted on one Windows 11 laptop in Docker. Private access over **Tailscale**, delivered by a
+custom **Norfbay Launcher** (`.exe`) that does the one-click install + launch. Players are gated
+by both the tailnet and the server whitelist.
 
 > Full design & rationale: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 > Plan of record: `~/.claude/plans/im-looking-to-set-warm-flurry.md`.
@@ -16,12 +16,12 @@ Hosted on one Windows 11 laptop in Docker. Public game access via **playit.gg**
 ## Status
 | Phase | What | State |
 |---|---|---|
-| 1 | Two Fabric servers in Docker (Cobblemon + Vanilla+) | ✅ running locally |
-| 1b | playit.gg public tunnel → `minecraft.norfbay.com` | ⏳ needs playit account |
-| 2 | Curated "epic" modpacks + `.mrpack` build | 🔜 |
-| 3 | `play.norfbay.com` — Google gate + auto-whitelist API | 🔜 needs Google OAuth |
-| 4 | Norfbay Launcher (Electron) | 🔜 |
-| 5 | No-downtime (lid/power), backups, docs | 🔜 |
+| 1 | Two Fabric servers in Docker (Cobblemon + Vanilla+) | ✅ running |
+| 2 | mrpack builder + connectable interim packs | ✅ (full "epic" curation optional) |
+| 3 | Norfbay Launcher — one-click `.exe` (install + launch) | ✅ built (`launcher/dist`) |
+| 4 | Tailscale access (share node with friends) | ⏳ share the `rmbsomenmax` node |
+| 5 | No-downtime (lid/power) — `scripts/setup-power.ps1` | ⏳ run as admin |
+| — | Website + Google gate | ❌ dropped (Tailscale + whitelist instead) |
 
 ## Quick start (local)
 ```bash
@@ -36,9 +36,10 @@ docker compose exec cobblemon rcon-cli whitelist add YOUR_MC_NAME
 docker compose exec vanilla   rcon-cli whitelist add YOUR_MC_NAME
 ```
 
-## Going public / adding the site + launcher
-See [`docs/ADMIN.md`](docs/ADMIN.md) for playit.gg, Cloudflare Tunnel, Google OAuth, and the
-compose `profiles` (`--profile public`, `--profile web`).
+## Giving friends access (Tailscale)
+Share the laptop's Tailscale node (`rmbsomenmax`) with each friend and whitelist their Minecraft
+name — see [`docs/ADMIN.md`](docs/ADMIN.md). Friends install the `.exe` launcher
+(`launcher/dist/Norfbay-Setup-*.exe`) and hit Play; see [`docs/FRIENDS.md`](docs/FRIENDS.md).
 
 ## What's where
 - `docker-compose.yml` — the whole server stack

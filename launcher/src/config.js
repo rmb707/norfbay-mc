@@ -1,9 +1,15 @@
-// Static config baked into the launcher. Server addresses default to the public
-// domains; until playit.gg is wired you can override the address per game in the UI
-// (Advanced), or set a global override in norfbay.override.json in the app's userData.
+// Static config baked into the launcher. Access is over Tailscale (private mesh),
+// so the servers are the laptop's Tailscale node. Friends must be on the tailnet
+// (installed Tailscale + accepted the share) to reach these. You can override the
+// address per game in the UI (Advanced) for LAN testing, etc.
+//
+// Laptop Tailscale node: rmbsomenmax  (100.103.103.67 / rmbsomenmax.tail635106.ts.net)
+// The IP is the most reliable address for shared/guest tailnet accounts; the MagicDNS
+// name (rmbsomenmax.tail635106.ts.net:PORT) also works for full tailnet members.
 'use strict';
 
 const MINECRAFT_VERSION = '1.21.1';
+const HOST = '100.103.103.67'; // laptop's Tailscale IP
 
 const GAMES = {
   cobblemon: {
@@ -11,7 +17,7 @@ const GAMES = {
     name: 'Cobblemon',
     blurb: 'Pokémon in Minecraft — catch, train, and battle across the world.',
     mrpack: 'norfbay-cobblemon.mrpack',
-    server: 'cobblemon.norfbay.com',
+    server: `${HOST}:25565`,
     accent: '#c56bff',
   },
   vanilla: {
@@ -19,7 +25,7 @@ const GAMES = {
     name: 'Vanilla+',
     blurb: 'Pure survival, tuned — performance, visuals, and quality-of-life.',
     mrpack: 'norfbay-vanilla.mrpack',
-    server: 'vanilla.norfbay.com',
+    server: `${HOST}:25566`,
     accent: '#5bd66b',
   },
 };
