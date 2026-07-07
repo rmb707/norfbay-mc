@@ -42,6 +42,9 @@ async function download(url, dest, onProgress) {
     out.on('finish', resolve);
     nodeStream.pipe(out);
   });
+  // Guard against silent truncation (the #1 cause of "invalid comment length").
+  if (total && seen !== total) throw new Error(`Truncated download: got ${seen} of ${total} bytes`);
+  return seen;
 }
 
 function findJavaw(dir) {
@@ -60,34 +63,54 @@ function findJavaw(dir) {
   return null;
 }
 
+function javaLooksComplete(javaw) {
+  // Temurin JRE home has a `release` marker file; javaw lives at <home>/bin/javaw.exe.
+  return !!javaw && fs.existsSync(path.join(path.dirname(path.dirname(javaw)), 'release'));
+}
+
 async function ensureJava(baseDir, log, onProgress) {
   const javaDir = path.join(baseDir, 'runtime', 'temurin21');
-  const existing = findJavaw(javaDir);
-  if (existing) { log(`Java 21 ready.`); return existing; }
+  const found = findJavaw(javaDir);
+  if (javaLooksComplete(found)) { log(`Java 21 ready.`); return found; }
 
-  log(`Downloading Java ${JAVA.major} runtime…`);
-  await fsp.mkdir(javaDir, { recursive: true });
   const zip = path.join(baseDir, 'runtime', 'temurin21.zip');
-  await download(JAVA.url, zip, (p) => onProgress && onProgress('download', p));
+  let lastErr;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      // Start each attempt from a clean slate so a prior partial can't corrupt us.
+      await fsp.rm(zip, { force: true });
+      await fsp.rm(javaDir, { recursive: true, force: true });
+      await fsp.mkdir(javaDir, { recursive: true });
 
-  log(`Extracting Java runtime… (first run scans ~900 files, can take a few minutes)`);
-  let done = 0;
-  await extract(zip, {
-    dir: javaDir,
-    onEntry: (_entry, zipfile) => {
-      done++;
-      const total = zipfile.entryCount || 0;
-      if (total && (done % 20 === 0 || done === total)) {
-        if (onProgress) onProgress('extract', done / total);
-        log(`Extracting Java runtime… ${Math.round((done / total) * 100)}% (${done}/${total})`);
-      }
-    },
-  });
-  await fsp.rm(zip, { force: true });
-  const javaw = findJavaw(javaDir);
-  if (!javaw) throw new Error('Java runtime extracted but javaw.exe not found');
-  log(`Java 21 ready.`);
-  return javaw;
+      log(`Downloading Java ${JAVA.major} runtime…${attempt > 1 ? ` (retry ${attempt})` : ''}`);
+      await download(JAVA.url, zip, (p) => onProgress && onProgress('download', p));
+
+      log(`Extracting Java runtime… (first run scans ~900 files, can take a few minutes)`);
+      let done = 0;
+      await extract(zip, {
+        dir: javaDir,
+        onEntry: (_entry, zipfile) => {
+          done++;
+          const total = zipfile.entryCount || 0;
+          if (total && (done % 20 === 0 || done === total)) {
+            if (onProgress) onProgress('extract', done / total);
+            log(`Extracting Java runtime… ${Math.round((done / total) * 100)}% (${done}/${total})`);
+          }
+        },
+      });
+      await fsp.rm(zip, { force: true });
+
+      const javaw = findJavaw(javaDir);
+      if (!javaw) throw new Error('extracted but javaw.exe not found');
+      log(`Java 21 ready.`);
+      return javaw;
+    } catch (e) {
+      lastErr = e;
+      log(`Java setup failed (attempt ${attempt}/3): ${e.message}`);
+      await fsp.rm(zip, { force: true }).catch(() => {});
+    }
+  }
+  throw new Error(`Could not set up Java after 3 attempts (last: ${lastErr && lastErr.message}). Check your connection and try again.`);
 }
 
 async function ensureFabric(root, mc, log) {
