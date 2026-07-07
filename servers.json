@@ -1,5 +1,5 @@
 {
-  "_note": "The launcher fetches this at runtime to resolve server addresses, so moving the servers (laptop -> Oracle -> playit) is a one-line edit here + git push, with NO new .exe. Values are playit.gg Minecraft-Java tunnel hostnames (SRV-backed, so no port needed) that front the Oracle box's localhost-bound servers.",
-  "cobblemon": { "server": "expected-champion.gl.joinmc.link" },
-  "vanilla": { "server": "classes-adopted.gl.joinmc.link" }
+  "_note": "The launcher fetches this at runtime to resolve server addresses, so moving the servers (laptop -> Oracle -> playit) is a one-line edit here + git push, with NO new .exe. Values are playit.gg Minecraft-Java tunnel host:port (explicit port required -- Minecraft's --quickPlayMultiplayer does NOT do the SRV lookup a manually-added server entry would, so a bare hostname silently connects to the wrong default port 25565 and hangs). Update BOTH host and port together if a playit tunnel is ever recreated.",
+  "cobblemon": { "server": "expected-champion.gl.joinmc.link:6323" },
+  "vanilla": { "server": "classes-adopted.gl.joinmc.link:6339" }
 }

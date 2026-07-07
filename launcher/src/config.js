@@ -1,8 +1,11 @@
 // Static config baked into the launcher. Servers run on the always-on Oracle box,
 // bound to localhost and exposed publicly via playit.gg outbound tunnels (which hide
 // the box IP and open no ports). Friends connect through the playit Minecraft-Java
-// tunnel hostnames below — SRV-backed, so no port is needed. You can override the
-// address per game in the UI (Advanced) for LAN testing, etc.
+// tunnel host:port below. The port MUST be explicit: Minecraft's --quickPlayMultiplayer
+// (used to auto-join) does not perform the SRV lookup a manually-added server entry
+// would, so a bare hostname silently connects to the wrong default port 25565 and
+// hangs for minutes before giving up. You can override the address per game in the
+// UI (Advanced) for LAN testing, etc.
 //
 // These are only the FALLBACK if the remote config (servers.json) can't be fetched;
 // the live addresses come from REMOTE_CONFIG_URL at startup. Keep them in sync when
@@ -22,7 +25,7 @@ const GAMES = {
     name: 'Cobblemon',
     blurb: 'Pokémon in Minecraft — catch, train, and battle across the world.',
     mrpack: 'norfbay-cobblemon.mrpack',
-    server: 'expected-champion.gl.joinmc.link', // playit tunnel -> Oracle 127.0.0.1:25565
+    server: 'expected-champion.gl.joinmc.link:6323', // playit tunnel -> Oracle 127.0.0.1:25565
     accent: '#c56bff',
   },
   vanilla: {
@@ -30,7 +33,7 @@ const GAMES = {
     name: 'Vanilla+',
     blurb: 'Pure survival, tuned — performance, visuals, and quality-of-life.',
     mrpack: 'norfbay-vanilla.mrpack',
-    server: 'classes-adopted.gl.joinmc.link', // playit tunnel -> Oracle 127.0.0.1:25566
+    server: 'classes-adopted.gl.joinmc.link:6339', // playit tunnel -> Oracle 127.0.0.1:25566
     accent: '#5bd66b',
   },
 };
