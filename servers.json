@@ -1,5 +1,5 @@
 {
-  "_note": "The launcher fetches this to resolve server addresses at runtime, so changing where the servers live (laptop -> Oracle -> playit address) is a one-line edit here + git push, with NO new .exe. Update the two 'server' values after playit is set up on the Oracle box.",
-  "cobblemon": { "server": "100.103.103.67:25565" },
-  "vanilla": { "server": "100.103.103.67:25566" }
+  "_note": "The launcher fetches this at runtime to resolve server addresses, so moving the servers (laptop -> Oracle -> playit) is a one-line edit here + git push, with NO new .exe. Values are playit.gg Minecraft-Java tunnel hostnames (SRV-backed, so no port needed) that front the Oracle box's localhost-bound servers.",
+  "cobblemon": { "server": "expected-champion.gl.joinmc.link" },
+  "vanilla": { "server": "classes-adopted.gl.joinmc.link" }
 }

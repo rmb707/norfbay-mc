@@ -1,15 +1,15 @@
-// Static config baked into the launcher. Access is over Tailscale (private mesh),
-// so the servers are the laptop's Tailscale node. Friends must be on the tailnet
-// (installed Tailscale + accepted the share) to reach these. You can override the
+// Static config baked into the launcher. Servers run on the always-on Oracle box,
+// bound to localhost and exposed publicly via playit.gg outbound tunnels (which hide
+// the box IP and open no ports). Friends connect through the playit Minecraft-Java
+// tunnel hostnames below — SRV-backed, so no port is needed. You can override the
 // address per game in the UI (Advanced) for LAN testing, etc.
 //
-// Laptop Tailscale node: rmbsomenmax  (100.103.103.67 / rmbsomenmax.tail635106.ts.net)
-// The IP is the most reliable address for shared/guest tailnet accounts; the MagicDNS
-// name (rmbsomenmax.tail635106.ts.net:PORT) also works for full tailnet members.
+// These are only the FALLBACK if the remote config (servers.json) can't be fetched;
+// the live addresses come from REMOTE_CONFIG_URL at startup. Keep them in sync when
+// the playit tunnels change.
 'use strict';
 
 const MINECRAFT_VERSION = '1.21.1';
-const HOST = '100.103.103.67'; // fallback if the remote config can't be fetched
 
 // Fetched at startup to resolve server addresses at runtime — so moving the servers
 // (laptop -> Oracle box -> a playit address) is a one-line edit to servers.json + push,
@@ -22,7 +22,7 @@ const GAMES = {
     name: 'Cobblemon',
     blurb: 'Pokémon in Minecraft — catch, train, and battle across the world.',
     mrpack: 'norfbay-cobblemon.mrpack',
-    server: `${HOST}:25565`,
+    server: 'expected-champion.gl.joinmc.link', // playit tunnel -> Oracle 127.0.0.1:25565
     accent: '#c56bff',
   },
   vanilla: {
@@ -30,7 +30,7 @@ const GAMES = {
     name: 'Vanilla+',
     blurb: 'Pure survival, tuned — performance, visuals, and quality-of-life.',
     mrpack: 'norfbay-vanilla.mrpack',
-    server: `${HOST}:25566`,
+    server: 'classes-adopted.gl.joinmc.link', // playit tunnel -> Oracle 127.0.0.1:25566
     accent: '#5bd66b',
   },
 };
