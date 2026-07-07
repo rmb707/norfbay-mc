@@ -36,9 +36,15 @@ const GAMES = {
 };
 
 // Adoptium Temurin 21 JRE (Windows x64) — used when no suitable Java is bundled.
+// Pinned to a specific build so the SHA-256 stays valid (a moving "latest" URL would
+// invalidate it) and the download can be integrity-checked. The direct GitHub asset
+// URL also drops the api.adoptium.net redirect hop. To bump Java, update url + size +
+// sha256 together (from https://api.adoptium.net/v3/assets/latest/21/hotspot?os=windows&architecture=x64&image_type=jre ).
 const JAVA = {
   major: 21,
-  url: 'https://api.adoptium.net/v3/binary/latest/21/ga/windows/x64/jre/hotspot/normal/eclipse?project=jdk',
+  url: 'https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.11%2B10/OpenJDK21U-jre_x64_windows_hotspot_21.0.11_10.zip',
+  size: 49005708,
+  sha256: 'be26677aaa20b39a62edcaab4c8857a8b76673b0f45abc0b6143b142b62717e4',
 };
 
 module.exports = { MINECRAFT_VERSION, GAMES, JAVA, REMOTE_CONFIG_URL };

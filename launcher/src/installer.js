@@ -8,42 +8,48 @@ const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
 const crypto = require('crypto');
-const { Readable } = require('stream');
 const AdmZip = require('adm-zip');
 const extract = require('extract-zip');
 const { JAVA } = require('./config');
 
-async function sha1File(file) {
+function hashFile(file, algo) {
   return new Promise((resolve, reject) => {
-    const h = crypto.createHash('sha1');
+    const h = crypto.createHash(algo);
     fs.createReadStream(file)
       .on('data', (d) => h.update(d))
       .on('end', () => resolve(h.digest('hex')))
       .on('error', reject);
   });
 }
+const sha1File = (file) => hashFile(file, 'sha1');
+const sha256File = (file) => hashFile(file, 'sha256');
 
 // Download url -> dest with progress callback (0..1 when length known, else -1).
-async function download(url, dest, onProgress) {
+// Reads the body via the web-stream reader and buffers it, then writes once — instead
+// of piping Readable.fromWeb() to a file. The old pipe path could end early yet still
+// resolve on 'finish', and its truncation guard only fired when the server sent a
+// Content-Length; a truncated body with no Content-Length wrote a corrupt zip that
+// later died as "invalid comment length". Here we enforce completeness against
+// expectedSize (a known-good size the caller passes), which the caller-supplied Java
+// size guarantees even when Content-Length is missing — so truncation always throws
+// (and is retried) rather than corrupting the file.
+async function download(url, dest, onProgress, expectedSize = 0) {
   const res = await fetch(url, { redirect: 'follow', headers: { 'User-Agent': 'norfbay-launcher/0.1' } });
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-  await fsp.mkdir(path.dirname(dest), { recursive: true });
-  const total = Number(res.headers.get('content-length')) || 0;
+  const total = expectedSize || Number(res.headers.get('content-length')) || 0;
+  const reader = res.body.getReader();
+  const chunks = [];
   let seen = 0;
-  const nodeStream = Readable.fromWeb(res.body);
-  const out = fs.createWriteStream(dest);
-  await new Promise((resolve, reject) => {
-    nodeStream.on('data', (c) => {
-      seen += c.length;
-      if (onProgress) onProgress(total ? seen / total : -1, seen, total);
-    });
-    nodeStream.on('error', reject);
-    out.on('error', reject);
-    out.on('finish', resolve);
-    nodeStream.pipe(out);
-  });
-  // Guard against silent truncation (the #1 cause of "invalid comment length").
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(Buffer.from(value));
+    seen += value.length;
+    if (onProgress) onProgress(total ? seen / total : -1, seen, total);
+  }
   if (total && seen !== total) throw new Error(`Truncated download: got ${seen} of ${total} bytes`);
+  await fsp.mkdir(path.dirname(dest), { recursive: true });
+  await fsp.writeFile(dest, Buffer.concat(chunks));
   return seen;
 }
 
@@ -83,7 +89,18 @@ async function ensureJava(baseDir, log, onProgress) {
       await fsp.mkdir(javaDir, { recursive: true });
 
       log(`Downloading Java ${JAVA.major} runtime…${attempt > 1 ? ` (retry ${attempt})` : ''}`);
-      await download(JAVA.url, zip, (p) => onProgress && onProgress('download', p));
+      await download(JAVA.url, zip, (p) => onProgress && onProgress('download', p), JAVA.size || 0);
+
+      // Integrity-check before extracting: a corrupt/truncated zip is the classic cause
+      // of "invalid comment length". SHA-256 also catches same-length tampering (e.g. a
+      // proxy/AV rewriting the body) that a size check alone would miss.
+      if (JAVA.sha256) {
+        const got = await sha256File(zip);
+        if (got !== JAVA.sha256) {
+          throw new Error(`Java download failed its integrity check (got ${got.slice(0, 12)}…, expected ${JAVA.sha256.slice(0, 12)}…). A VPN, proxy, or antivirus may be altering the download.`);
+        }
+        log(`Java download verified (sha256 ok).`);
+      }
 
       log(`Extracting Java runtime… (first run scans ~900 files, can take a few minutes)`);
       let done = 0;
