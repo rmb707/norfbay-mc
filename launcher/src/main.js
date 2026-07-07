@@ -139,6 +139,11 @@ ipcMain.handle('play', async (_e, { gameId, server, memoryMb }) => {
     version: { number: MINECRAFT_VERSION, type: 'release', custom: fabricVersion },
     memory: { max: `${memoryMb || 4096}M`, min: '1024M' },
     javaPath,
+    // Force IPv4: some players' networks have a broken IPv6 path (SYN/ACK completes,
+    // but any real data after it silently vanishes -- a PMTU/ICMPv6 blackhole). Java
+    // otherwise follows the OS's address-selection order, which on Windows often
+    // prefers IPv6 whenever an AAAA record exists, even if that path is broken.
+    customArgs: ['-Djava.net.preferIPv4Stack=true'],
     customLaunchArgs: ['--quickPlayMultiplayer', address],
     overrides: { maxSockets: 4 },
   });
