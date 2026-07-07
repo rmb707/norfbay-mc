@@ -1,0 +1,24 @@
+# Secrets
+.env
+*.secret
+secrets/
+
+# Server world data & backups (large, machine-local)
+data/
+
+# Built modpack artifacts
+dist/
+*.mrpack
+
+# Node / build
+node_modules/
+.next/
+out/
+build/
+launcher/dist/
+launcher/out/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log

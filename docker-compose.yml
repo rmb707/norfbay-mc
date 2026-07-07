@@ -1,0 +1,177 @@
+# Norfbay Minecraft — two Fabric 1.21.1 servers (Cobblemon + Vanilla-plus)
+# Phase 1 brings up: cobblemon, vanilla, and their backup sidecars.
+# Public tunnels (playit, cloudflared) and the web app are gated behind compose
+# profiles so they only start once you've supplied their tokens in .env:
+#   docker compose up -d                      # just the two game servers + backups
+#   docker compose --profile public up -d     # + playit tunnel  (needs PLAYIT_SECRET)
+#   docker compose --profile web up -d        # + website + cloudflared (needs tokens)
+#
+# All values with ${...} come from .env (copy .env.example -> .env first).
+
+name: norfbay-mc
+
+x-mc-common: &mc-common
+  image: itzg/minecraft-server:java21
+  restart: unless-stopped
+  stdin_open: true
+  tty: true
+  environment: &mc-env
+    EULA: "TRUE"
+    TYPE: "FABRIC"
+    VERSION: "1.21.1"
+    MEMORY: "6G"
+    USE_AIKAR_FLAGS: "true"
+    # --- mod auto-download from Modrinth (server-side subset; deps auto-resolved) ---
+    MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
+    MODRINTH_ALLOWED_VERSION_TYPE: "beta"   # allow release+beta (some 1.21.1 builds are beta)
+    # --- access control ---
+    ENABLE_WHITELIST: "TRUE"
+    ENFORCE_WHITELIST: "TRUE"
+    ONLINE_MODE: "TRUE"
+    OPS: "${MC_OWNER:-}"
+    WHITELIST: "${MC_WHITELIST:-}"
+    # --- rcon (internal; used by the web app for auto-whitelist) ---
+    ENABLE_RCON: "true"
+    RCON_PASSWORD: "${RCON_PASSWORD:?set RCON_PASSWORD in .env}"
+    # --- server.properties niceties ---
+    OVERRIDE_SERVER_PROPERTIES: "true"
+    DIFFICULTY: "normal"
+    VIEW_DISTANCE: "10"
+    SIMULATION_DISTANCE: "8"
+    MAX_PLAYERS: "20"
+    TZ: "America/New_York"
+  networks:
+    - norfbay
+  healthcheck:
+    test: ["CMD", "mc-health"]
+    start_period: 5m
+    interval: 30s
+    retries: 20
+
+services:
+  cobblemon:
+    <<: *mc-common
+    container_name: norfbay-cobblemon
+    environment:
+      <<: *mc-env
+      MEMORY: "8G"
+      MOTD: "§dNorfbay §fCobblemon §7— gotta catch 'em all"
+      # Server-side mods (client-only render mods like Sodium/Iris are NOT here —
+      # they live in the client .mrpack). Deps (architectury, kotlin) auto-resolve.
+      MODRINTH_PROJECTS: >-
+        cobblemon,
+        fabric-api,
+        fabric-language-kotlin,
+        lithium,
+        ferrite-core,
+        spark,
+        chunky
+    ports:
+      - "25565:25565"           # game (LAN/localhost until playit is wired)
+      - "127.0.0.1:25575:25575" # rcon (admin only, localhost)
+    volumes:
+      - ./data/cobblemon:/data
+
+  vanilla:
+    <<: *mc-common
+    container_name: norfbay-vanilla
+    environment:
+      <<: *mc-env
+      MEMORY: "6G"
+      MOTD: "§aNorfbay §fVanilla+ §7— pure survival, tuned"
+      MODRINTH_PROJECTS: >-
+        fabric-api,
+        lithium,
+        ferrite-core,
+        spark,
+        chunky
+    ports:
+      - "25566:25565"
+      - "127.0.0.1:25576:25575"
+    volumes:
+      - ./data/vanilla:/data
+
+  # --- Automatic world backups (every 2h, keep ~2 weeks) ---
+  backup-cobblemon:
+    image: itzg/mc-backup
+    restart: unless-stopped
+    depends_on:
+      - cobblemon
+    environment:
+      BACKUP_INTERVAL: "2h"
+      PRUNE_BACKUPS_DAYS: "14"
+      RCON_HOST: "cobblemon"
+      RCON_PASSWORD: "${RCON_PASSWORD}"
+      INITIAL_DELAY: "5m"
+    volumes:
+      - ./data/cobblemon:/data:ro
+      - ./data/backups/cobblemon:/backups
+    networks:
+      - norfbay
+
+  backup-vanilla:
+    image: itzg/mc-backup
+    restart: unless-stopped
+    depends_on:
+      - vanilla
+    environment:
+      BACKUP_INTERVAL: "2h"
+      PRUNE_BACKUPS_DAYS: "14"
+      RCON_HOST: "vanilla"
+      RCON_PASSWORD: "${RCON_PASSWORD}"
+      INITIAL_DELAY: "5m"
+    volumes:
+      - ./data/vanilla:/data:ro
+      - ./data/backups/vanilla:/backups
+    networks:
+      - norfbay
+
+  # --- PUBLIC GAME ACCESS (profile: public) — needs PLAYIT_SECRET in .env ---
+  # First run without a secret to claim the agent, then paste the secret.
+  playit:
+    image: ghcr.io/playit-cloud/playit-agent:0.15
+    restart: unless-stopped
+    profiles: ["public"]
+    environment:
+      SECRET_KEY: "${PLAYIT_SECRET:-}"
+    network_mode: host   # reach cobblemon/vanilla on the host's published ports
+    depends_on:
+      - cobblemon
+      - vanilla
+
+  # --- WEBSITE + HTTPS TUNNEL (profile: web) — needs tokens in .env ---
+  web:
+    build: ./web
+    container_name: norfbay-web
+    restart: unless-stopped
+    profiles: ["web"]
+    environment:
+      AUTH_SECRET: "${AUTH_SECRET:-}"
+      AUTH_GOOGLE_ID: "${AUTH_GOOGLE_ID:-}"
+      AUTH_GOOGLE_SECRET: "${AUTH_GOOGLE_SECRET:-}"
+      ALLOWED_EMAILS: "${ALLOWED_EMAILS:-}"
+      RCON_PASSWORD: "${RCON_PASSWORD}"
+      COBBLEMON_RCON: "cobblemon:25575"
+      VANILLA_RCON: "vanilla:25575"
+      NEXTAUTH_URL: "https://play.norfbay.com"
+    networks:
+      - norfbay
+    depends_on:
+      - cobblemon
+      - vanilla
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    profiles: ["web"]
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: "${CF_TUNNEL_TOKEN:-}"
+    networks:
+      - norfbay
+    depends_on:
+      - web
+
+networks:
+  norfbay:
+    driver: bridge

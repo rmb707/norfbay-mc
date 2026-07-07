@@ -1,0 +1,36 @@
+{
+  "name": "Norfbay Vanilla+",
+  "summary": "Pure survival, tuned: performance, visuals, quality-of-life, and richer worldgen. No major mechanic overhauls.",
+  "minecraft": "1.21.1",
+  "loader": "fabric",
+  "java": 21,
+  "serverAddress": "vanilla.norfbay.com",
+  "note": "side: both = client+server (content/worldgen must match). client = render/UI only. server = perf/admin.",
+  "mods": [
+    { "slug": "fabric-api",            "side": "both",   "required": true },
+
+    { "slug": "terralith",             "side": "both",   "required": false },
+    { "slug": "tectonic",              "side": "both",   "required": false },
+    { "slug": "waystones",             "side": "both",   "required": false },
+    { "slug": "supplementaries",       "side": "both",   "required": false },
+    { "slug": "farmers-delight-fabric","side": "both",   "required": false },
+
+    { "slug": "lithium",               "side": "both",   "required": true },
+    { "slug": "ferrite-core",          "side": "both",   "required": true },
+    { "slug": "krypton",               "side": "server", "required": false },
+    { "slug": "spark",                 "side": "server", "required": false },
+    { "slug": "chunky",                "side": "server", "required": false },
+
+    { "slug": "sodium",                "side": "client", "required": true },
+    { "slug": "iris",                  "side": "client", "required": false },
+    { "slug": "entityculling",         "side": "client", "required": false },
+    { "slug": "immediatelyfast",       "side": "client", "required": false },
+    { "slug": "modmenu",               "side": "client", "required": true },
+    { "slug": "reeses-sodium-options", "side": "client", "required": false },
+    { "slug": "jade",                  "side": "client", "required": false },
+    { "slug": "roughly-enough-items",  "side": "client", "required": false },
+    { "slug": "appleskin",             "side": "both",   "required": false },
+    { "slug": "xaeros-minimap",        "side": "client", "required": false },
+    { "slug": "xaeros-world-map",      "side": "client", "required": false }
+  ]
+}
