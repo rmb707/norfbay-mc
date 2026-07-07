@@ -1,0 +1,13 @@
+{
+  "name": "norfbay-tools",
+  "private": true,
+  "type": "module",
+  "description": "Build scripts for Norfbay Minecraft (mrpack builder, etc.)",
+  "scripts": {
+    "build:packs": "node build-mrpack.mjs",
+    "build:packs:full": "node build-mrpack.mjs --full"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16"
+  }
+}
