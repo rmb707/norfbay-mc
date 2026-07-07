@@ -1,0 +1,14 @@
+# Overlay for a SHARED/production host (the Oracle box running socouniverse + Postgres).
+# Adds hard memory caps so the Minecraft containers can NEVER starve co-located services:
+# if a container exceeds its cap, only that container's process is OOM-killed inside its
+# own cgroup — the host (and your Postgres/Next.js) is never put under memory pressure.
+#
+# Always used together with the base file. The deploy script sets COMPOSE_FILE in .env so
+# every `docker compose` command in this dir includes both automatically.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.oracle.yml up -d
+services:
+  cobblemon:
+    mem_limit: ${MEM_LIMIT_COBBLEMON:-5g}   # must be >= MEM_COBBLEMON heap + overhead
+  vanilla:
+    mem_limit: ${MEM_LIMIT_VANILLA:-4g}     # must be >= MEM_VANILLA heap + overhead
