@@ -1,0 +1,13 @@
+# Copy this to deploy/TARGET.local (which is git-ignored, so it never goes public)
+# and fill in your box. The agent will read it so you don't have to re-type anything.
+#
+#   cp deploy/TARGET.example deploy/TARGET.local   # then edit the values
+
+SSH_TARGET="ubuntu@YOUR_BOX_PUBLIC_IP"
+SSH_KEY="$HOME/.ssh/oci_livekit"
+MC_NAME="YourMinecraftName"
+
+# Notes for the agent:
+# - This is a PRODUCTION box (a web app + Postgres + a Cloudflare Tunnel already run on it).
+# - Only ever manage the isolated `norfbay-*` containers. Never touch anything else, don't
+#   open ports, don't change the tunnel/firewall. See CLAUDE.md "SAFETY".

@@ -2,6 +2,8 @@
 .env
 *.secret
 secrets/
+deploy/*.local
+deploy/TARGET.local
 
 # Server world data & backups (large, machine-local)
 data/
