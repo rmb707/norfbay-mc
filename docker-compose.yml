@@ -131,7 +131,7 @@ services:
   # --- PUBLIC GAME ACCESS (profile: public) — needs PLAYIT_SECRET in .env ---
   # First run without a secret to claim the agent, then paste the secret.
   playit:
-    image: ghcr.io/playit-cloud/playit-agent:0.15
+    image: ghcr.io/playit-cloud/playit-agent:0.16   # 0.16+ is multi-arch (amd64+arm64); 0.15 was amd64-only and fails on ARM (Oracle Ampere)
     restart: unless-stopped
     profiles: ["public"]
     environment:
