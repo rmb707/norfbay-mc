@@ -81,3 +81,16 @@ Tunnel. Hard rules:
 - [ ] playit set up + `servers.json` pointed at it
 - [ ] Whitelist the players (max ~3)
 - [ ] (optional) Expand to the "epic" modpacks; add a launcher app icon; code-sign the .exe
+
+## Code index (repowise): use it before reading files
+This repo has a local repowise index (`.repowise/`, git-excluded; Rob, 2026-09-25) to cut token use. It covers the
+tracked files only, and a post-commit hook refreshes it in the background.
+- **Claude and Codex** have the `repowise` MCP server. Before you explore, call `get_overview` (the repo) or
+  `get_context` (the files and symbols you're about to touch; pass several in one call), and use its search and answer
+  tools for "where is X" and "what breaks if I change Y". Read files only for the lines you edit.
+- **Kimi, Antigravity and any agent without MCP** use the same index from the shell:
+  `repowise context <file|symbol>...`, `repowise search "<query>"`, `repowise ask "<question>"`, `repowise risk <file>`.
+- **Noisy commands go through distill:** `repowise distill <cmd>` (test runs, builds, `git log`). A `[repowise#<ref>]`
+  marker stands for omitted lines; `repowise expand <ref>` brings them back, so never re-run the command to see them.
+- Never run `repowise init`, `generate` or `--prose` here: init writes managed blocks into CLAUDE.md/AGENTS.md, and
+  prose spends API credit. If the index looks stale, run `repowise update`.
